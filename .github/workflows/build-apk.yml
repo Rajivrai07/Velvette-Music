@@ -1,0 +1,39 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+    env:
+      # The app build reads these from local.properties or the environment.
+      # Empty values keep the debug build working without any secrets.
+      LASTFM_API_KEY: ""
+      LASTFM_SECRET: ""
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build debug APK
+        # The project uses product flavors (dev/prod), so plain `assembleDebug`
+        # does not exist. assembleProdDebug builds the real app identity
+        # (applicationId com.music.bitchord, name BitChord) in debug mode.
+        run: ./gradlew assembleProdDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BitChord-debug-apk
+          path: app/build/outputs/apk/prod/debug/*.apk
