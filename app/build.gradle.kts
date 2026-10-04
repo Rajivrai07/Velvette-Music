@@ -128,6 +128,16 @@ android {
     }
 
     signingConfigs {
+        // Fixed debug keystore checked into the repo: every CI build signs
+        // with the SAME key, so updates install over each other instead of
+        // demanding an uninstall on every release (the runner-generated
+        // debug key used to be different on every build).
+        getByName("debug") {
+            storeFile = rootProject.file("app/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         // Both halves have to be there, not just the properties file: it *names*
         // the keystore rather than containing it, and both are gitignored
         // separately, so a checkout can easily end up with the one and not the
