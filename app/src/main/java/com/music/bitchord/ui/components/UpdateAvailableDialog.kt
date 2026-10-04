@@ -151,8 +151,14 @@ fun UpdateAvailableDialog(
                     text = when (state) {
                         is AppUpdateChecker.DownloadState.Downloading ->
                             stringResource(R.string.update_downloading_body, version)
-                        is AppUpdateChecker.DownloadState.Ready ->
-                            stringResource(R.string.update_ready_body, version)
+                        is AppUpdateChecker.DownloadState.Ready -> {
+                            val ready = state as AppUpdateChecker.DownloadState.Ready
+                            if (ready.signatureMatches) {
+                                stringResource(R.string.update_ready_body, version)
+                            } else {
+                                stringResource(R.string.update_signature_mismatch_body, version)
+                            }
+                        }
                         is AppUpdateChecker.DownloadState.Failed ->
                             stringResource(R.string.update_failed_body, version)
                         else ->
@@ -245,9 +251,18 @@ fun UpdateAvailableDialog(
                     AlertAction(label = stringResource(R.string.cancel), emphasised = false, onClick = onCancelDownload)
                 }
                 is AppUpdateChecker.DownloadState.Ready -> {
-                    AlertAction(label = stringResource(R.string.install_now), emphasised = true, onClick = onInstall)
-                    AlertRule()
-                    AlertAction(label = stringResource(R.string.later), emphasised = false, onClick = onDismiss)
+                    if (state.signatureMatches) {
+                        AlertAction(label = stringResource(R.string.install_now), emphasised = true, onClick = onInstall)
+                        AlertRule()
+                        AlertAction(label = stringResource(R.string.later), emphasised = false, onClick = onDismiss)
+                    } else {
+                        // The new APK is signed with a different key: Android
+                        // would refuse the install, so send the user to the
+                        // release page for a manual uninstall + reinstall.
+                        AlertAction(label = stringResource(R.string.open_releases_page), emphasised = true, onClick = onOpenReleasePage)
+                        AlertRule()
+                        AlertAction(label = stringResource(R.string.later), emphasised = false, onClick = onDismiss)
+                    }
                 }
                 is AppUpdateChecker.DownloadState.Failed -> {
                     AlertAction(label = stringResource(R.string.try_again), emphasised = true, onClick = onDownload)

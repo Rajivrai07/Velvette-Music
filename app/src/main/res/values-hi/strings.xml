@@ -109,6 +109,7 @@
     <string name="update_available_body">Velvette Music %1$s डाउनलोड के लिए उपलब्ध है।</string>
     <string name="update_downloading_body">Velvette Music %1$s डाउनलोड हो रहा है…</string>
     <string name="update_ready_body">Velvette Music %1$s इंस्टॉल के लिए तैयार है।</string>
+    <string name="update_signature_mismatch_body">Velvette Music %1$s पुराने ऐप के ऊपर इंस्टॉल नहीं हो सकता — इसका सिग्नेचर बदल गया है। पहले पुराना ऐप अनइंस्टॉल करें, फिर रिलीज़ पेज से नया वर्शन इंस्टॉल करें।</string>
     <string name="update_failed_body">Velvette Music %1$s डाउनलोड नहीं हो सका।</string>
     <string name="download_now">अभी डाउनलोड करें</string>
     <string name="install_now">अभी इंस्टॉल करें</string>

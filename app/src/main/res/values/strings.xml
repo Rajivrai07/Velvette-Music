@@ -140,6 +140,7 @@
     <string name="update_available_body">Velvette Music %1$s is available to download.</string>
     <string name="update_downloading_body">Downloading Velvette Music %1$s…</string>
     <string name="update_ready_body">Velvette Music %1$s is ready to install.</string>
+    <string name="update_signature_mismatch_body">Velvette Music %1$s can’t be installed over the current app — its signature changed. Please uninstall the old app first, then install the new version from the releases page.</string>
     <string name="update_failed_body">Couldn’t download Velvette Music %1$s.</string>
     <string name="download_now">Download Now</string>
     <string name="install_now">Install Now</string>

@@ -54,7 +54,13 @@ object AppUpdateChecker {
     sealed interface DownloadState {
         data object Idle : DownloadState
         data class Downloading(val fraction: Float) : DownloadState
-        data class Ready(val file: File) : DownloadState
+        /**
+         * [signatureMatches] is false when the downloaded APK is signed with a
+         * different certificate than the installed app — Android will refuse
+         * to install it ("App not installed"), so the dialog must tell the
+         * user to uninstall first instead of failing silently.
+         */
+        data class Ready(val file: File, val signatureMatches: Boolean) : DownloadState
         data class Failed(val message: String) : DownloadState
     }
 
@@ -156,7 +162,7 @@ object AppUpdateChecker {
                     }
                 }
             }
-            _download.value = DownloadState.Ready(target)
+            _download.value = DownloadState.Ready(target, isSameSignature(context, target))
         }.onFailure { error ->
             _download.value = if (downloadCancelled) {
                 DownloadState.Idle
@@ -205,6 +211,37 @@ object AppUpdateChecker {
                         Intent.FLAG_ACTIVITY_NEW_TASK,
                 ),
         )
+    }
+
+    /**
+     * True when [file] (a downloaded update APK) is signed with the same
+     * certificate as the currently installed app. When the signing key
+     * changes between releases, Android silently refuses the install, so the
+     * caller must warn the user to uninstall first instead of pretending the
+     * update worked.
+     */
+    fun isSameSignature(context: Context, file: File): Boolean {
+        val pm = context.packageManager
+        val apkSigners = runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                pm.getPackageArchiveInfo(file.absolutePath, PackageManager.GET_SIGNING_CERTIFICATES)
+                    ?.signingInfo?.apkContentsSigners
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getPackageArchiveInfo(file.absolutePath, PackageManager.GET_SIGNATURES)?.signatures
+            }
+        }.getOrNull()
+        val appSigners = runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                pm.getPackageInfo(context.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+                    .signingInfo?.apkContentsSigners
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getPackageInfo(context.packageName, PackageManager.GET_SIGNATURES).signatures
+            }
+        }.getOrNull()
+        if (apkSigners.isNullOrEmpty() || appSigners.isNullOrEmpty()) return false
+        return apkSigners.any { apk -> appSigners.any { app -> apk.toByteArray().contentEquals(app.toByteArray()) } }
     }
 
     /** A version split into its numeric dotted parts and whether it carries a "-suffix" (e.g. "-beta2"). */
