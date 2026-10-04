@@ -39,6 +39,18 @@
         android:maxSdkVersion="32" />
 
     <!--
+      Android TV: declares the Leanback UI as supported without requiring it,
+      so the same APK installs on phones and TVs. The TV entry point is
+      TvMainActivity below, which carries the LEANBACK_LAUNCHER category.
+    -->
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+
+    <!--
       Only for API 28 and below. From 29 the app writes to the shared Music
       folder through MediaStore, which grants access to the rows it created and
       needs no permission at all — and this one stops being grantable there.
@@ -228,6 +240,22 @@
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          Android TV entry point. Shows on the TV home screen (Leanback
+          launcher) with the TV banner; hidden from the phone launcher.
+          Shares the playback service and data layer with MainActivity.
+        -->
+        <activity
+            android:name=".ui.tv.TvMainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.BitChord"
+            android:banner="@drawable/tv_banner">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
 
