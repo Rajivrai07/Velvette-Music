@@ -788,15 +788,15 @@ fun SettingsScreen(
                         if (liquidGlassSupported) {
                             R.string.liquid_glass_subtitle
                         } else {
-                            R.string.liquid_glass_subtitle_legacy
+                            R.string.liquid_glass_unavailable
                         },
                     ),
-                    enabled = true,
+                    enabled = liquidGlassSupported,
                     trailing = {
                         Switch(
                             checked = liquidGlass,
                             onCheckedChange = AppSettings::setLiquidGlass,
-                            enabled = true,
+                            enabled = liquidGlassSupported,
                             colors = SwitchDefaults.colors(
                                 checkedTrackColor = MaterialTheme.colorScheme.primary,
                                 checkedBorderColor = MaterialTheme.colorScheme.primary,
