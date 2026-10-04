@@ -34,6 +34,10 @@ import com.music.bitchord.ui.components.backdrop.highlight.HighlightElement
 import com.music.bitchord.ui.components.backdrop.internal.ShapeProvider
 import com.music.bitchord.ui.components.backdrop.shadow.Shadow
 import androidx.compose.ui.unit.dp
+import dev.chrisbanes.haze.ExperimentalHazeApi
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
 
 /** Whether the liquid glass nav bar is turned on — see [AppSettings.liquidGlass]. */
 val LocalLiquidGlassEnabled = staticCompositionLocalOf { false }
@@ -102,42 +106,72 @@ fun glassIndicatorColor(): Color =
     if (MaterialTheme.colorScheme.surface.luminance() > 0.5f) Color.White else Color.Black
 
 /**
- * A lightweight visual match for liquid glass over a stable background.
- *
- * This keeps the same translucent tint, directional highlight and hairline as
- * [liquidGlass], but intentionally performs no backdrop capture, blur, lens
- * refraction or shadow rendering. When Liquid Glass is disabled or unsupported,
- * [fallbackColor] preserves the control's existing filled appearance.
+ * The frosted-glass tint, directional highlight and hairline shared by every
+ * glass surface that cannot sample the backdrop: the lightweight treatment
+ * and the pre-Android-12 legacy path below. Pure canvas drawing — no
+ * RenderEffect — so it runs on every Android version.
  */
 @Composable
-fun Modifier.lightweightLiquidGlass(
-    shape: CornerBasedShape,
-    fallbackColor: Color,
-): Modifier {
-    val useGlass = LocalLiquidGlassEnabled.current && isGlassSupported()
+private fun Modifier.frostedGlassTint(shape: CornerBasedShape): Modifier {
     val glassTint = if (MaterialTheme.colorScheme.surface.luminance() > 0.5f) {
         Color(0xFFFAFAFA)
     } else {
         Color(0xFF121212)
     }
     val shapeProvider = ShapeProvider { shape }
-
     return clip(shape)
-        .background(
-            color = if (useGlass) glassTint.copy(alpha = SURFACE_OPACITY) else fallbackColor,
-            shape = shape,
-        )
+        .background(color = glassTint.copy(alpha = SURFACE_OPACITY), shape = shape)
         .then(
-            if (useGlass) {
-                HighlightElement(
-                    shapeProvider = shapeProvider,
-                    highlight = { Highlight.Default },
-                )
-            } else {
-                Modifier
-            },
+            HighlightElement(
+                shapeProvider = shapeProvider,
+                highlight = { Highlight.Default },
+            ),
         )
         .border(GLASS_EDGE_WIDTH, GLASS_EDGE_COLOR, shape)
+}
+
+/**
+ * Liquid Glass for devices without RenderEffect support (below Android 12).
+ *
+ * The true refracting pipeline needs android.graphics.RenderEffect on a
+ * RenderNode, which does not exist before API 31 — no app code can conjure
+ * it. This is the closest the platform allows: the Haze blur the app already
+ * uses as its fallback, dressed with the same translucent tint, directional
+ * highlight and hairline as the real glass.
+ */
+@OptIn(ExperimentalHazeApi::class, ExperimentalHazeMaterialsApi::class)
+@Composable
+fun Modifier.legacyLiquidGlass(
+    shape: CornerBasedShape,
+    hazeState: HazeState,
+    container: Color,
+): Modifier = optimizedHazeEffect(
+    state = hazeState,
+    style = HazeMaterials.regular(container),
+).then(frostedGlassTint(shape))
+
+/**
+ * A lightweight visual match for liquid glass over a stable background.
+ *
+ * This keeps the same translucent tint, directional highlight and hairline as
+ * [liquidGlass], but intentionally performs no backdrop capture, blur, lens
+ * refraction or shadow rendering. When Liquid Glass is disabled,
+ * [fallbackColor] preserves the control's existing filled appearance. The
+ * frosted treatment itself needs no RenderEffect, so it is available on every
+ * Android version when the setting is on.
+ */
+@Composable
+fun Modifier.lightweightLiquidGlass(
+    shape: CornerBasedShape,
+    fallbackColor: Color,
+): Modifier {
+    return if (LocalLiquidGlassEnabled.current) {
+        frostedGlassTint(shape)
+    } else {
+        clip(shape)
+            .background(color = fallbackColor, shape = shape)
+            .border(GLASS_EDGE_WIDTH, GLASS_EDGE_COLOR, shape)
+    }
 }
 
 /**
