@@ -367,7 +367,7 @@ private fun FloatingAppMark(
     modifier: Modifier = Modifier,
 ) {
     val reduceDynamicBlur by AppSettings.reduceDynamicBlur.collectAsStateWithLifecycle()
-    val useLiquidGlass = LocalLiquidGlassEnabled.current && isGlassSupported()
+    val useLiquidGlass = LocalLiquidGlassEnabled.current
     val contentColor = if (useLiquidGlass && !reduceDynamicBlur) {
         glassContentColor()
     } else {
@@ -411,7 +411,7 @@ private fun ArtworkPageBackButton(
 ) {
     val shape = CircleShape
     val reduceDynamicBlur by AppSettings.reduceDynamicBlur.collectAsStateWithLifecycle()
-    val useLiquidGlass = LocalLiquidGlassEnabled.current && isGlassSupported()
+    val useLiquidGlass = LocalLiquidGlassEnabled.current
     val contentColor = if (useLiquidGlass && !reduceDynamicBlur) {
         glassContentColor()
     } else {
@@ -492,13 +492,18 @@ private fun artworkPageSurface(
 ): Modifier {
     val container = MaterialTheme.colorScheme.surface
     val reduceDynamicBlur by AppSettings.reduceDynamicBlur.collectAsStateWithLifecycle()
-    val useLiquidGlass = LocalLiquidGlassEnabled.current && isGlassSupported()
+    val useLiquidGlass = LocalLiquidGlassEnabled.current
 
     return Modifier
         .clip(shape)
         .then(
             when {
-                useLiquidGlass -> Modifier.liquidGlass(shape)
+                useLiquidGlass && isGlassSupported() -> Modifier.liquidGlass(shape)
+                useLiquidGlass && hazeState != null -> Modifier.legacyLiquidGlass(
+                    shape = shape,
+                    hazeState = hazeState,
+                    container = container,
+                )
                 reduceDynamicBlur || hazeState == null -> Modifier.background(container)
                 else -> Modifier.optimizedHazeEffect(
                     state = hazeState,
