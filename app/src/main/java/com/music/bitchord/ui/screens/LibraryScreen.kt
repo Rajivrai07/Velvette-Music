@@ -340,7 +340,9 @@ private fun ReplayBanner(card: ReplayHeroCard?, onClick: () -> Unit) {
             MeshGradientBackground(
                 palette = palette,
                 trackKey = card?.artworkUrl ?: "replay",
-                continuous = true,
+                // Static in a scrolling list — a looping blur redraw is the
+                // most expensive draw in the app and stutters scroll.
+                continuous = false,
                 // A short wide strip: at the backdrop's own radius the four
                 // colours blur into one wash before they reach its ends.
                 blurRadius = 28.dp,
@@ -465,7 +467,10 @@ internal fun LibraryGridShelf(
             horizontalArrangement = Arrangement.spacedBy(LIBRARY_GRID_SPACING),
         ) {
             leadingCard?.let { card -> item(key = "leading") { card() } }
-            items(visibleItems) { item ->
+            items(
+                items = visibleItems,
+                key = { item -> item.browseId ?: item.videoId ?: item.title },
+            ) { item ->
                 ShelfCard(
                     item = item,
                     onClick = { onItemClick(item) },

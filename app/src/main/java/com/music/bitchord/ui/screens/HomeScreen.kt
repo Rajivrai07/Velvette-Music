@@ -256,7 +256,10 @@ private fun RecentShelf(
                     contentPadding = PaddingValues(horizontal = PAGE_GUTTER),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    items(shelf.items.chunked(RECENT_TRACKS_PER_COLUMN)) { column ->
+                    items(
+                        items = shelf.items.chunked(RECENT_TRACKS_PER_COLUMN),
+                        key = { column -> column.firstOrNull()?.browseId ?: column.firstOrNull()?.videoId ?: column.hashCode() },
+                    ) { column ->
                         Column(Modifier.width(columnWidth)) {
                             column.forEach { item ->
                                 RecentTrackRow(
@@ -276,7 +279,10 @@ private fun RecentShelf(
                     contentPadding = PaddingValues(horizontal = PAGE_GUTTER),
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    items(shelf.items) { item ->
+                    items(
+                        items = shelf.items,
+                        key = { item -> item.browseId ?: item.videoId ?: item.title },
+                    ) { item ->
                         HeroCard(
                             item = item,
                             onClick = { onItemClick(item) },
@@ -645,7 +651,10 @@ private fun HeroShelf(
                 contentPadding = PaddingValues(horizontal = PAGE_GUTTER),
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                items(shelf.items) { item ->
+                items(
+                    items = shelf.items,
+                    key = { item -> item.browseId ?: item.videoId ?: item.title },
+                ) { item ->
                     HeroCard(
                         item = item,
                         onClick = { onItemClick(item) },
@@ -735,7 +744,10 @@ internal fun Shelf(
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             leadingCard?.let { card -> item(key = "leading") { card() } }
-            items(shelf.items) { item ->
+            items(
+                items = shelf.items,
+                key = { item -> item.browseId ?: item.videoId ?: item.title },
+            ) { item ->
                 ShelfCard(
                     item = item,
                     onClick = { onItemClick(item) },
@@ -813,7 +825,10 @@ private fun ServiceCard(colors: List<Color>, trackKey: String, icon: ImageVector
         MeshGradientBackground(
             palette = palette,
             trackKey = trackKey,
-            continuous = true,
+            // Never loop inside a scrolling list: a perpetually re-blurred
+            // layer at refresh rate is the most expensive thing this app
+            // draws, and it stutters scrolling on weaker phones.
+            continuous = false,
             blurRadius = 24.dp,
         )
         Icon(
@@ -851,7 +866,8 @@ internal fun ShelfCard(
                     MeshGradientBackground(
                         palette = palette,
                         trackKey = "local:downloads",
-                        continuous = true,
+                        // Static in a scrolling list — see the note on ServiceCard above.
+                        continuous = false,
                         blurRadius = 24.dp,
                     )
                     Icon(
