@@ -142,7 +142,7 @@ fun FloatingBottomBar(
     val pillShape = RoundedCornerShape(percent = 50)
     val container = MaterialTheme.colorScheme.surface
     val reduceDynamicBlur by AppSettings.reduceDynamicBlur.collectAsStateWithLifecycle()
-    val useGlass = LocalLiquidGlassEnabled.current && isGlassSupported()
+    val useGlass = LocalLiquidGlassEnabled.current
     val reduceAnimation by AppSettings.reduceAnimation.collectAsStateWithLifecycle()
     // The glass settle is exactly the motion "reduce animation" promises to
     // drop — snapping both the indicator's travel and the glyph's pop to
@@ -203,8 +203,16 @@ fun FloatingBottomBar(
             .then(
                 if (reduceDynamicBlur) {
                     Modifier.background(container)
-                } else if (useGlass) {
+                } else if (useGlass && isGlassSupported()) {
                     Modifier.liquidGlass(shape = pillShape)
+                } else if (useGlass) {
+                    // Below Android 12 there is no RenderEffect: frosted Haze
+                    // blur with the glass tint instead of the refracting pipe.
+                    Modifier.legacyLiquidGlass(
+                        shape = pillShape,
+                        hazeState = hazeState,
+                        container = container,
+                    )
                 } else {
                     Modifier.optimizedHazeEffect(
                         state = hazeState,
