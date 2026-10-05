@@ -2,6 +2,8 @@ package com.music.bitchord.data
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.pm.Signature
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -222,7 +224,7 @@ object AppUpdateChecker {
      */
     fun isSameSignature(context: Context, file: File): Boolean {
         val pm = context.packageManager
-        val apkSigners = runCatching {
+        val apkSigners: Array<Signature>? = runCatching {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 pm.getPackageArchiveInfo(file.absolutePath, PackageManager.GET_SIGNING_CERTIFICATES)
                     ?.signingInfo?.apkContentsSigners
@@ -231,7 +233,7 @@ object AppUpdateChecker {
                 pm.getPackageArchiveInfo(file.absolutePath, PackageManager.GET_SIGNATURES)?.signatures
             }
         }.getOrNull()
-        val appSigners = runCatching {
+        val appSigners: Array<Signature>? = runCatching {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 pm.getPackageInfo(context.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
                     .signingInfo?.apkContentsSigners

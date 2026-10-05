@@ -251,7 +251,8 @@ fun UpdateAvailableDialog(
                     AlertAction(label = stringResource(R.string.cancel), emphasised = false, onClick = onCancelDownload)
                 }
                 is AppUpdateChecker.DownloadState.Ready -> {
-                    if (state.signatureMatches) {
+                    val readyState = state as AppUpdateChecker.DownloadState.Ready
+                    if (readyState.signatureMatches) {
                         AlertAction(label = stringResource(R.string.install_now), emphasised = true, onClick = onInstall)
                         AlertRule()
                         AlertAction(label = stringResource(R.string.later), emphasised = false, onClick = onDismiss)
